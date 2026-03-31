@@ -1,6 +1,6 @@
 # DSP Project: ECG Signal Refining and Analysis
 
-*Group 3 - Digital Signal Processing
+Group 3 - Digital Signal Processing
 
 ## Team Members
 * Name 1 - Signal Acquisition
