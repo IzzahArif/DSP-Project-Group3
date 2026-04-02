@@ -1,4 +1,4 @@
-# DSP Project: ECG Signal Refining and Analysis
+# Real-Time ECG Acquisition, Plotting, R-Peak Detection, Heart Rate, and HRV in MATLAB
 
 Group 3 - Digital Signal Processing
 
