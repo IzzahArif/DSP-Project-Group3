@@ -7,4 +7,8 @@ Group 3 - Digital Signal Processing
 * *Wardah Rafique* - Embedded Programming
 * *Rameen Khan* - DSP Simulation and Algorithm
 * *Fizzah Tanveer* - DSP Simulation and Algorithm
-* **/Results**: Visual plots of filtered signals and calculated heart rate metrics.
+
+## Project Folders
+* **/Data**: Raw ECG signal records.
+* **/Scripts**: MATLAB filtering and analysis code.
+* **/Results**: Visual plots of filtered signals and heart rate metrics.
