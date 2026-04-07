@@ -12,3 +12,5 @@ Group 3 - Digital Signal Processing
 * *Data*: Raw ECG signal records.
 * *Scripts*: MATLAB filtering and analysis code.
 * *Results*: Visual plots of filtered signals and heart rate metrics.
+### Refined Dashboard
+![ECG Dashboard](Results/ECG_Analysis_Dashboard.png)
