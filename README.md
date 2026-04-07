@@ -7,3 +7,4 @@ Group 3 - Digital Signal Processing
 * *Wardah Rafique* - Embedded Programming
 * *Rameen Khan* - DSP Simulation and Algorithm
 * *Fizzah Tanveer* - DSP Simulation and Algorithm
+* **/Results**: Visual plots of filtered signals and calculated heart rate metrics.
