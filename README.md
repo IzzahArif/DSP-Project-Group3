@@ -9,6 +9,6 @@ Group 3 - Digital Signal Processing
 * *Fizzah Tanveer* - DSP Simulation and Algorithm
 
 ## Project Folders
-* **/Data**: Raw ECG signal records.
-* **/Scripts**: MATLAB filtering and analysis code.
-* **/Results**: Visual plots of filtered signals and heart rate metrics.
+* *Data*: Raw ECG signal records.
+* *Scripts*: MATLAB filtering and analysis code.
+* *Results*: Visual plots of filtered signals and heart rate metrics.
