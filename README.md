@@ -1,16 +1,23 @@
-# Real-Time ECG Acquisition, Plotting, R-Peak Detection, Heart Rate, and HRV in MATLAB
+ECG Signal Processing: From Simulation to Real-Time Hardware
+This project explores the digital signal processing (DSP) life cycle of Electrocardiogram (ECG) signals, starting with offline analysis of medical databases and progressing to a real-time acquisition system using an Arduino Nano and AD8232 sensor.
 
-Group 3 - Digital Signal Processing
+Project Structure
+📂 Task_1a: Simulated Analysis
+Processing of MIT-BIH database records to establish a baseline for filtering and peak detection.
 
-## Team Members
-* *Izzah Arif* - Project Management and Life Cycle
-* *Wardah Rafique* - Embedded Programming
-* *Rameen Khan* - DSP Simulation and Algorithm
-* *Fizzah Tanveer* - DSP Simulation and Algorithm
+Algorithms: Implemented Notch filters (50Hz) and Bandpass filters to remove powerline noise and baseline wander.
 
-## Project Folders
-* *Data*: Raw ECG signal records.
-* *Scripts*: MATLAB filtering and analysis code.
-* *Results*: Visual plots of filtered signals and heart rate metrics.
-### Refined Dashboard
-![ECG Dashboard](Results/ECG_Analysis_Dashboard.png)
+Metrics: Automated calculation of Heart Rate (BPM) and Heart Rate Variability (HRV).
+
+Results: View Simulated Results.
+
+📂 Task_1b: Real-Time Hardware Acquisition
+Live data acquisition and processing using physical hardware.
+
+Hardware Setup: Arduino Nano integrated with an AD8232 ECG sensor module.
+
+Acquisition: Real-time transmission of analog signals via Serial Communication to MATLAB.
+
+Visualization: A live dashboard displaying the refined PQRST waveform and real-time BPM.
+
+Media: Watch the Hardware Demo.
