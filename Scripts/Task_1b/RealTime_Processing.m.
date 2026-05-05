@@ -1,0 +1,124 @@
+%% ECG Real-Time Acquisition & DSP from Arduino + AD8232
+clear; close all; clc;
+
+% --- 1. CONFIGURATION ---
+comPort  = "COM8";  % Ensure Arduino Serial Plotter/Monitor is CLOSED
+baud     = 115200;
+fs       = 360;     % Sampling frequency in Hz
+duration = 10;      % Recording duration in seconds      
+N        = fs * duration;
+
+% --- 2. ACQUIRE DATA ---
+s = serialport(comPort, baud);
+configureTerminator(s, "LF");
+flush(s);
+disp('Recording 10 seconds...');
+disp('IMPORTANT: Sit perfectly still and breathe shallowly.');
+
+ecgRaw = zeros(N, 1);
+i = 1;
+while i <= N
+    line = readline(s);
+    val  = str2double(line);
+    if isfinite(val)
+        ecgRaw(i) = val;
+        i = i + 1;
+    end
+end
+clear s;
+disp('Done recording. Processing signal...');
+
+% Clean up any dropped serial reads
+ecgRaw = fillmissing(ecgRaw, 'linear');
+
+% --- 3. NORMALIZE & ADVANCED FILTERING ---
+% Convert Arduino 10-bit ADC range (0-1023) to roughly -1 to +1
+ecgRaw = (double(ecgRaw) - 512) / 512;   
+
+% Step A: Remove linear drift across the entire 10 seconds
+ecgRaw = detrend(ecgRaw);
+
+% Step B: Tightened Bandpass filter (1.0–40 Hz)
+% Note: 1.0 Hz cutoff strongly rejects the "rollercoaster" breathing artifact
+[b, a] = butter(2, [1.0 40] / (fs/2), 'bandpass');
+ecgRaw = filtfilt(b, a, ecgRaw);
+
+% Step C: 50 Hz Notch Filter (Kills mains power interference)
+wo = 50 / (fs/2);
+bw = wo / 20;
+[bn, an] = iirnotch(wo, bw);
+ecgRaw = filtfilt(bn, an, ecgRaw);
+
+% Step D: Dynamic Baseline Flattening
+% Calculates a moving average and subtracts it to keep the signal centered at 0
+baseline = movmean(ecgRaw, round(fs * 0.75)); 
+ecgRaw = ecgRaw - baseline;
+
+% Trim the first 1 second to remove filter startup transients
+trim = fs;
+ecgRaw = ecgRaw(trim+1:end);
+t = (0:length(ecgRaw)-1)' / fs;
+total_samples = length(ecgRaw);
+
+% --- 4. R-PEAK DETECTION ---
+% Smooth the absolute value to make peak detection highly reliable
+ecgDet = movmean(abs(ecgRaw), 5);
+
+% Detect R-peaks. MinPeakHeight set to 0.15 for flattened 10-bit signals
+[~, locs] = findpeaks(ecgDet, 'MinPeakHeight', 0.15, 'MinPeakDistance', fs*0.4);
+
+if length(locs) < 3
+    error('Not enough R-peaks detected. Check electrode contact and ensure you are sitting still.');
+end
+
+% Extract morphology indices around a middle heartbeat for the zoom plot
+R_idx = locs(round(length(locs)/2));
+[~, q_off] = min(ecgRaw(max(1, R_idx-25) : R_idx));       Q_idx = R_idx - 25 + q_off - 1;
+[~, s_off] = min(ecgRaw(R_idx    : min(length(ecgRaw), R_idx+25)));    S_idx = R_idx + s_off - 1;
+[~, p_off] = max(ecgRaw(max(1, R_idx-80) : R_idx-40));    P_idx = R_idx - 80 + p_off - 1;
+
+% --- 5. CALCULATE METRICS ---
+rr_ms         = (diff(locs) / fs) * 1000;
+bpm           = 60 / (mean(rr_ms) / 1000);
+hrv_sdnn      = std(rr_ms);
+beat_variance = var(rr_ms);
+
+% --- 6. BUILD DASHBOARD ---
+figure('Name','Arduino DSP ECG Analyzer','Color',[0.05 0.05 0.08], ...
+       'Units','normalized','Position',[0.1 0.1 0.8 0.8]);
+tlo = tiledlayout(2,2,'TileSpacing','Loose','Padding','Compact');
+
+% TOP: Full Signal Overview
+ax1 = nexttile(tlo,[1 2]);
+plot(ax1,t,ecgRaw,'Color',[0 0.8 1],'LineWidth',1); hold on;
+plot(ax1,t(locs),ecgRaw(locs),'v','MarkerFaceColor',[1 0.2 0.4],'MarkerEdgeColor','none');
+title('FLATTENED ECG R-PEAK DETECTION','Color','w','FontSize',14);
+xlim([0 t(end)]); grid on;
+set(ax1,'Color',[0.07 0.07 0.1],'XColor','w','YColor','w','GridAlpha',0.2);
+
+% BOTTOM LEFT: Single Cycle Morphology
+ax2 = nexttile(tlo);
+plot(ax2,t,ecgRaw,'Color',[0.2 1 0.5],'LineWidth',2.5); hold on;
+xlim([t(R_idx)-0.4, t(R_idx)+0.6]);
+title('SINGLE CYCLE MORPHOLOGY','Color','w','FontSize',14);
+set(ax2,'Color',[0.07 0.07 0.1],'XColor','w','YColor','w','GridAlpha',0.2);
+
+% Label the PQRS markers
+text(t(R_idx),ecgRaw(R_idx)+0.15,'R','Color','y','FontWeight','bold','FontSize',14,'HorizontalAlignment','center');
+text(t(P_idx),ecgRaw(P_idx)+0.10,'P','Color','w','FontWeight','bold','FontSize',12,'HorizontalAlignment','center');
+text(t(Q_idx),ecgRaw(Q_idx)-0.10,'Q','Color',[1 0.4 0.4],'FontWeight','bold','FontSize',12,'HorizontalAlignment','center');
+text(t(S_idx),ecgRaw(S_idx)-0.10,'S','Color',[1 0.4 0.4],'FontWeight','bold','FontSize',12,'HorizontalAlignment','center');
+plot(t(R_idx),ecgRaw(R_idx),'yo',t(P_idx),ecgRaw(P_idx),'wo', ...
+     t(Q_idx),ecgRaw(Q_idx),'ro',t(S_idx),ecgRaw(S_idx),'ro','LineWidth',1.5);
+
+% BOTTOM RIGHT: Metrics Box
+nexttile(tlo); axis off;
+stats_str = {' DSP ANALYSIS RESULTS','', ...
+    sprintf(' Source:         Arduino Uno/Nano'), ...
+    sprintf(' Sampling Freq:  %d Hz', fs), ...
+    sprintf(' HEART RATE:     %.1f BPM', bpm), ...
+    sprintf(' HRV (SDNN):     %.1f ms', hrv_sdnn), ...
+    sprintf(' VARIANCE:       %.1f ms²', beat_variance)};
+annotation('textbox',[0.55 0.15 0.35 0.3],'String',stats_str, ...
+    'Color','w','EdgeColor',[0 0.8 1],'LineWidth',2, ...
+    'BackgroundColor',[0.1 0.1 0.15],'FontSize',12,'FontName','Consolas');
