@@ -27,7 +27,7 @@ We implemented three parallel DSP approaches to optimize real-time performance:
 ---
 
 ## 🛠️ Hardware Specifications
-* **Microcontroller**: Arduino Nano
+* **Microcontroller**: Arduino Uno
 * **Sensor**: AD8232 Heart Rate Monitor Module
 * **Electrodes**: 3-Lead ECG System (RA, LA, LL)
 * **Interface**: MATLAB Serial Communication (9600 Baud)
